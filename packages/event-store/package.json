@@ -1,0 +1,33 @@
+{
+  "name": "@ubirak/event-store",
+  "version": "0.0.1",
+  "description": "Let's store some events",
+  "main": "index.js",
+  "repository": "https://github.com/ubirak/ubirak-js.git",
+  "author": "Ubirak collaborators",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@babel/core": "^7.0.0-beta.32",
+    "@babel/preset-env": "^7.0.0-beta.32",
+    "@babel/preset-flow": "^7.0.0-beta.32",
+    "babel-core": "^7.0.0-0",
+    "babel-jest": "^21.2.0",
+    "flow-bin": "^0.59.0",
+    "flow-typed": "^2.2.3",
+    "jest": "^21.2.1",
+    "prettier": "1.8.2",
+    "unassert": "^1.5.1"
+  },
+  "scripts": {
+    "flow": "yarn flow:check",
+    "flow:check": "flow check --color=always",
+    "flow:configure": "flow-typed update --flowVersion 0.59.0",
+    "format": "yarn format:check",
+    "format:check": "prettier --list-different \"**/*.{js,json}\"",
+    "format:fix": "prettier --write \"**/*.{js,json}\"",
+    "configure": "yarn flow:configure",
+    "integration": "echo 'Nothing to do'",
+    "qa": "yarn format:check && yarn flow:check",
+    "test": "jest"
+  }
+}

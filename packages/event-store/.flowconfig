@@ -1,0 +1,12 @@
+[version]
+>=0.59.0
+
+[ignore]
+.*\.spec\.js
+.*\.snap
+
+[options]
+munge_underscores=true
+esproposal.class_instance_fields=enable
+esproposal.class_static_fields=enable
+emoji=true
