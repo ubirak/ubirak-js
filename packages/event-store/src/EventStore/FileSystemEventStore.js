@@ -1,59 +1,70 @@
 /* @flow */
 
-import assert from 'assert';
+import assert, { throws } from 'assert';
 import fs from 'fs';
-import { promisify } from 'util';
+import jsonlines from 'jsonlines';
+import { Readable, Transform, Writable } from 'stream';
+import streamify from 'stream-array';
 import { EventStore } from './../EventStore';
 import NormalizedEvent from './../NormalizedEvent';
 import type { EventSerializer } from './../EventSerializer';
 import JsonNormalizedEventSerializer from './../EventSerializer/JsonNormalizedEventSerializer';
-
-const writeFile = promisify(fs.writeFile);
-const readFile = promisify(fs.readFile);
+import { FileSystemAdapter } from './FileSystemAdapter';
+import JSONLinesFileSystemAdapter from './FileSystemAdapter/JSONLinesFileSystemAdapter';
+import InMemoryCollectorStream from './InMemoryCollectorStream';
 
 export default class FileSystemEventStore implements EventStore {
-  storagePath: string;
   eventSerializer: EventSerializer;
+  fileSystemAdapter: FileSystemAdapter;
 
   constructor(storagePath: string, eventSerializer: EventSerializer) {
     assert(!!storagePath);
     assert(!!eventSerializer);
 
-    this.storagePath = storagePath;
+    this.fileSystemAdapter = new JSONLinesFileSystemAdapter(storagePath);
     this.eventSerializer = eventSerializer;
   }
 
-  // TODO: Use buffer to serialize the data and use stream to write it on the filesystem
-  // TODO: Manage simple write concurency use case
   async commit(
     streamName: string,
     history: Array<NormalizedEvent>,
   ): Promise<void> {
-    const payload = history
-      .map(normalizedEvent => ({
-        stream_name: streamName,
-        event: this.eventSerializer.serialize(normalizedEvent),
-      }))
-      .map(data => JSON.stringify(data))
-      .join('\n');
+    const storableEvents = history.map(normalizedEvent => ({
+      stream_name: streamName,
+      event: this.eventSerializer.serialize(normalizedEvent),
+    }));
 
-    return await writeFile(this.storagePath, payload, {
-      encoding: 'utf8',
-      flag: 'a',
+    return new Promise((resolve, reject) => {
+      const storableEventsStream = streamify(storableEvents);
+      storableEventsStream.on('error', err => reject(err));
+
+      const stringify = jsonlines.stringify();
+      stringify.on('error', err => reject(err));
+
+      const writter = this.fileSystemAdapter.writeFor(streamName);
+      writter.on('error', err => reject(err));
+      writter.on('finish', () => resolve());
+
+      storableEventsStream.pipe(stringify).pipe(writter);
     });
   }
 
-  // TODO: Use buffer to read the data on the filesystem and filter/serialize on the fly
   async fetchHistoryFor(streamName: string): Promise<Array<NormalizedEvent>> {
-    const content = await readFile(this.storagePath, {
-      encoding: 'utf8',
-      flag: fs.constants.O_RDONLY,
-    });
+    return new Promise((resolve, reject) => {
+      const storedEventReadder = this.fileSystemAdapter.readFor(streamName);
+      storedEventReadder.on('error', err => reject(err));
 
-    return content
-      .split('\n')
-      .map(line => JSON.parse(line))
-      .filter(payload => payload.stream_name === streamName)
-      .map(({ event }) => this.eventSerializer.deserialize(event));
+      const deserialize = this.eventSerializer.deserializeStream();
+      deserialize.on('err', err => reject(err));
+
+      const inMemoryCollector = new InMemoryCollectorStream();
+      inMemoryCollector.on('err', err => reject(err));
+
+      storedEventReadder.on('end', () => {
+        resolve(inMemoryCollector.collect());
+      });
+
+      storedEventReadder.pipe(deserialize).pipe(inMemoryCollector);
+    });
   }
 }

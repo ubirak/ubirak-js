@@ -1,6 +1,6 @@
 /* @flow */
 
-import NormalizedEvent from './NormalizedEvent';
+import NormalizedEvent from './../NormalizedEvent';
 
 export interface EventStore {
   // TODO: Manage concurency strategy on commit
