@@ -1,5 +1,10 @@
 {
-  "extends": [
-    "config:base"
-  ]
+  "extends": ["config:js-lib", "config:monorepo"],
+  "semanticCommits": true,
+  "rebaseStalePrs": true,
+  "automerge": true,
+  "automergeType": "branch-push",
+  "major": {
+    "automerge": false
+  }
 }
