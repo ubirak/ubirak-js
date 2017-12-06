@@ -4,7 +4,7 @@ import assert from 'assert';
 import { Transform } from 'stream';
 import NormalizedEvent from './../NormalizedEvent';
 import { EventSerializer } from './../EventSerializer';
-import { transformify } from './../utils/stream';
+import { transformify } from './../../utils/stream';
 
 export default class JsonNormalizedEventSerializer implements EventSerializer {
   serialize(normalizedEvent: NormalizedEvent) {

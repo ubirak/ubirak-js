@@ -5,9 +5,9 @@ import os from 'os';
 import path from 'path';
 import { execSync } from 'child_process';
 import { promisify } from 'util';
-import NormalizedEvent from './../NormalizedEvent';
-import JsonNormalizedEventSerializer from './../EventSerializer/JsonNormalizedEventSerializer';
-import FileSystemEventStore from './FileSystemEventStore';
+import NormalizedEvent from './../../Domain/NormalizedEvent';
+import JsonNormalizedEventSerializer from './../../Domain/EventSerializer/JsonNormalizedEventSerializer';
+import FileSystemEventStore from './';
 
 const generateTmpDirectory = () =>
   fs.mkdtempSync(path.join(os.tmpdir(), 'ubirak-js-'));
@@ -35,12 +35,12 @@ describe('FileSystemEventStore', () => {
 
     const sut = new FileSystemEventStore(storageFilepath, fakeSerializer);
 
-    await sut.commit('stream-a', [
+    await sut.commitToStream('stream-a', [
       new NormalizedEvent('aaa-aaa', 'something.was.done', {}),
       new NormalizedEvent('bbb-bbb', 'something-else.was.done', {}),
     ]);
 
-    await sut.commit('stream-b', [
+    await sut.commitToStream('stream-b', [
       new NormalizedEvent('ccc-ccc', 'another-thing.was.done', {}),
     ]);
 
@@ -71,7 +71,7 @@ describe('FileSystemEventStore', () => {
 
     await writeFile(storageFilepath, fixture.join('\n'), { encoding: 'utf8' });
 
-    const events = await sut.fetchHistoryFor('data-a');
+    const events = await sut.fetchStream('data-a');
 
     expect(events.length).toBe(2);
   });

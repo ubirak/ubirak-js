@@ -5,12 +5,12 @@ import fs from 'fs';
 import jsonlines from 'jsonlines';
 import { Readable, Transform, Writable } from 'stream';
 import streamify from 'stream-array';
-import { EventStore } from './../EventStore';
-import NormalizedEvent from './../NormalizedEvent';
-import type { EventSerializer } from './../EventSerializer';
-import JsonNormalizedEventSerializer from './../EventSerializer/JsonNormalizedEventSerializer';
+import { EventStore } from './../../Domain/EventStore';
+import NormalizedEvent from './../../Domain/NormalizedEvent';
+import type { EventSerializer } from './../../Domain/EventSerializer';
+import JsonNormalizedEventSerializer from './../../Domain/EventSerializer/JsonNormalizedEventSerializer';
 import { FileSystemAdapter } from './FileSystemAdapter';
-import JSONLinesFileSystemAdapter from './FileSystemAdapter/JSONLinesFileSystemAdapter';
+import OneJSONLinesFileSystemAdapter from './FileSystemAdapter/OneJSONLinesFileSystemAdapter';
 import InMemoryCollectorStream from './InMemoryCollectorStream';
 
 export default class FileSystemEventStore implements EventStore {
@@ -21,13 +21,14 @@ export default class FileSystemEventStore implements EventStore {
     assert(!!storagePath);
     assert(!!eventSerializer);
 
-    this.fileSystemAdapter = new JSONLinesFileSystemAdapter(storagePath);
+    this.fileSystemAdapter = new OneJSONLinesFileSystemAdapter(storagePath);
     this.eventSerializer = eventSerializer;
   }
 
-  async commit(
+  async commitToStream(
     streamName: string,
     history: Array<NormalizedEvent>,
+    expectedVersion?: number = 0,
   ): Promise<void> {
     const storableEvents = history.map(normalizedEvent => ({
       stream_name: streamName,
@@ -49,7 +50,7 @@ export default class FileSystemEventStore implements EventStore {
     });
   }
 
-  async fetchHistoryFor(streamName: string): Promise<Array<NormalizedEvent>> {
+  async fetchStream(streamName: string): Promise<Array<NormalizedEvent>> {
     return new Promise((resolve, reject) => {
       const storedEventReadder = this.fileSystemAdapter.readFor(streamName);
       storedEventReadder.on('error', err => reject(err));
@@ -66,5 +67,11 @@ export default class FileSystemEventStore implements EventStore {
 
       storedEventReadder.pipe(deserialize).pipe(inMemoryCollector);
     });
+  }
+
+  async deleteStream(streamName: string): Promise<void> {
+    throw new Error(
+      'TODO: You could not yet delete a stream in a file system event store',
+    );
   }
 }

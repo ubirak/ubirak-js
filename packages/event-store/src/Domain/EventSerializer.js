@@ -1,7 +1,7 @@
 /* @flow */
 
 import { Transform } from 'stream';
-import NormalizedEvent from './../NormalizedEvent';
+import NormalizedEvent from './NormalizedEvent';
 
 export interface EventSerializer {
   serialize(normalizedEvent: NormalizedEvent): string;

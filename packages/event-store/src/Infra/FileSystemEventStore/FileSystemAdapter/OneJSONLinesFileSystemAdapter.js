@@ -5,7 +5,7 @@ import { Readable, Writable, PassThrough } from 'stream';
 import jsonlines from 'jsonlines';
 import { stringify } from 'querystring';
 import { FileSystemAdapter } from './../FileSystemAdapter';
-import { transformify } from './../../utils/stream';
+import { transformify } from './../../../utils/stream';
 
 const filterByStreamNameStream = (streamName: string) => {
   return transformify(
@@ -24,7 +24,8 @@ const encapsulatePayloadStream = (streamName: string) => {
   );
 };
 
-export default class JSONLinesFileSystemAdapter implements FileSystemAdapter {
+export default class OneJSONLinesFileSystemAdapter
+  implements FileSystemAdapter {
   filepath: string;
 
   constructor(filepath: string) {
