@@ -1,9 +1,12 @@
 /* @flow */
 
 import assert from 'assert';
+import { Transform } from 'stream';
 import NormalizedEvent from './../NormalizedEvent';
+import { EventSerializer } from './../EventSerializer';
+import { transformify } from './../utils/stream';
 
-export default class JsonNormalizedEventSerializer {
+export default class JsonNormalizedEventSerializer implements EventSerializer {
   serialize(normalizedEvent: NormalizedEvent) {
     assert(
       normalizedEvent instanceof NormalizedEvent,
@@ -25,6 +28,12 @@ export default class JsonNormalizedEventSerializer {
       payload.type,
       payload.data,
       payload.metadata,
+    );
+  }
+
+  deserializeStream(): Transform {
+    return transformify((data, encoding, cb) =>
+      cb(null, this.deserialize(data)),
     );
   }
 }

@@ -29,5 +29,9 @@
     "integration": "echo 'Nothing to do'",
     "qa": "yarn format:check && yarn flow:check",
     "test": "jest"
+  },
+  "dependencies": {
+    "jsonlines": "^0.1.1",
+    "stream-array": "^1.1.2"
   }
 }

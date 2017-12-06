@@ -3,11 +3,11 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import FileSystemEventStore from './FileSystemEventStore';
-import NormalizedEvent from './../NormalizedEvent';
-import JsonNormalizedEventSerializer from './../EventSerializer/JsonNormalizedEventSerializer';
 import { execSync } from 'child_process';
 import { promisify } from 'util';
+import NormalizedEvent from './../NormalizedEvent';
+import JsonNormalizedEventSerializer from './../EventSerializer/JsonNormalizedEventSerializer';
+import FileSystemEventStore from './FileSystemEventStore';
 
 const generateTmpDirectory = () =>
   fs.mkdtempSync(path.join(os.tmpdir(), 'ubirak-js-'));
@@ -31,20 +31,26 @@ describe('FileSystemEventStore', () => {
     const storageFilepath = path.join(playgroundDirectory, 'foo.jsonl');
 
     const fakeSerializer = new JsonNormalizedEventSerializer();
-    fakeSerializer.serialize = jest.fn(() => ({ mocked: 'serialization' }));
+    fakeSerializer.serialize = jest.fn(() => 'mocked serialization');
 
     const sut = new FileSystemEventStore(storageFilepath, fakeSerializer);
 
-    await sut.commit('data-a', [
+    await sut.commit('stream-a', [
       new NormalizedEvent('aaa-aaa', 'something.was.done', {}),
       new NormalizedEvent('bbb-bbb', 'something-else.was.done', {}),
+    ]);
+
+    await sut.commit('stream-b', [
+      new NormalizedEvent('ccc-ccc', 'another-thing.was.done', {}),
     ]);
 
     const fileContent = await readFile(storageFilepath, { encoding: 'utf8' });
 
     expect(fileContent)
-      .toBe(`{"stream_name":"data-a","event":{"mocked":"serialization"}}
-{"stream_name":"data-a","event":{"mocked":"serialization"}}`);
+      .toBe(`{"stream_name":"stream-a","event":"mocked serialization"}
+{"stream_name":"stream-a","event":"mocked serialization"}
+{"stream_name":"stream-b","event":"mocked serialization"}
+`);
   });
 
   it('should read events from a given stream on the filesystem', async () => {
@@ -58,9 +64,9 @@ describe('FileSystemEventStore', () => {
     const sut = new FileSystemEventStore(storageFilepath, fakeSerializer);
 
     const fixture = [
-      '{"stream_name":"data-a","event":{"foo":42}}',
-      '{"stream_name":"data-a","event":{"bar":"ricard"}}',
-      '{"stream_name":"data-b","event":{"baz":false}}',
+      `{"stream_name":"data-a","event":"one"}`,
+      '{"stream_name":"data-b","event":"two"}',
+      '{"stream_name":"data-a","event":"three"}',
     ];
 
     await writeFile(storageFilepath, fixture.join('\n'), { encoding: 'utf8' });
