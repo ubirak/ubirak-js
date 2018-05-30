@@ -15,7 +15,7 @@
     "flow-bin": "0.73.0",
     "flow-typed": "2.4.0",
     "jest": "22.4.4",
-    "prettier": "1.13.2",
+    "prettier": "1.13.3",
     "unassert": "1.5.1"
   },
   "scripts": {
